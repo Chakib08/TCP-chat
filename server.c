@@ -1,48 +1,42 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 
+#define ITERATIONS 1000000
 
-void* worker1(void *arg)
-{
-    for(int i = 0; i < 5; i++)
-    {
-        printf("Woker1: %d \n", i);
-        sleep(1);
+int counter = 0;                 // shared counter
+pthread_mutex_t counter_lock;    // mutex to protect counter
+
+void *increment(void *arg) {
+    for (int i = 0; i < ITERATIONS; i++) {
+        //pthread_mutex_lock(&counter_lock);   // enter critical section
+        counter++;
+        //pthread_mutex_unlock(&counter_lock); // leave critical section
     }
     return NULL;
 }
 
-void* worker2(void *arg)
-{
-    for(int i = 0; i < 5; i++)
-    {
-        printf("Woker2: %d \n", i);
-        sleep(1);
-    }
-    return NULL;
-}
-
-int main(int argc, char** argv)
-{
+int main() {
     pthread_t t1, t2;
 
-    if(pthread_create(&t1, NULL, worker1, NULL) != 0)
-    {
-        perror("Error creating worker1 thread");
-        exit(EXIT_FAILURE);
-    }
+    // initialize mutex
+    // if (pthread_mutex_init(&counter_lock, NULL) != 0) {
+    //     perror("Mutex init failed");
+    //     exit(EXIT_FAILURE);
+    // }
 
-    if(pthread_create(&t2, NULL, worker2, NULL) != 0)
-    {
-        perror("Error creating worker1 thread");
-        exit(EXIT_FAILURE);
-    }
-    
+    // create two threads
+    pthread_create(&t1, NULL, increment, NULL);
+    pthread_create(&t2, NULL, increment, NULL);
+
+    // wait for threads to finish
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
 
-    printf("Both threads finished");
+    printf("Final counter value: %d\n", counter);
+
+    // destroy mutex
+    pthread_mutex_destroy(&counter_lock);
 
     return 0;
 }
